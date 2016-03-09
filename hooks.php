@@ -12,40 +12,52 @@ message		String	The message of the opened ticket.
 priority	String	The priority of the opened ticket. High, Medium or Low
 */
 
-function trello_TicketOpen($vars) {
+function trello_TicketOpen($input_vars) {
 	global $customadminpath, $CONFIG;
 
 	$trello = whmcs2trello_module_settings();
-	if ($vars['priority']=='High' OR ((int)$trello['support_department'] > 0 AND $vars['deptid'] == (int)$trello['support_department'] ) ) {
+	if ($input_vars['priority']=='High' OR ((int)$trello['support_department'] > 0 AND $input_vars['deptid'] == (int)$trello['support_department'] ) ) {
+		$ticket_URL = $CONFIG['SystemURL'].'/'.$customadminpath.'/supporttickets.php?action=viewticket&id='.$input_vars['ticketid'] ;
+		$ticket_id = $input_vars['ticketid'];
+		$ticket_userid	  = $input_vars['userid'];
+		$ticket_deptid	  = $input_vars['deptid'];
+		$ticket_deptname = $input_vars['deptname'];
+		$ticket_subject  = $input_vars['subject'];
+		$ticket_message  = $input_vars['message'];
+		$ticket_priority = $input_vars['priority'];
 		$companyname=''; 
 		$adminuser = "apiapi";
 		$responsetype = "json";  // Probably unnecessary
-		 if (!empty($vars["userid"])) {
+
+		 if (!empty($ticket_userid)) {
 			 // Get customer details
 			 $command = "getclientsdetails";
-			 $api_input["clientid"] = $vars['userid'];
+			 $api_input["clientid"] = $ticket_userid;
 			 $api_input["stats"] = false;
 			 $api_input["responsetype"] = $responsetype ; 
 
 			 $getclientsdetails = localAPI($command,$api_input,$adminuser);
+
 			 $companyname=$getclientsdetails["companyname"];
 		 }
 		$command = "getticket";
 		$api_input = array(); 
-		$api_input["ticketid"] = $vars['ticketid'];
+		$api_input["ticketid"] = $input_vars['ticketid'];
 		$getticket = localAPI($command,$api_input,$adminuser);
-		$vars['tid'] = $getticket['tid']; 
-//		$shortmessage=$vars['priority'] .' priority ticket: '. $vars['subject'] ; 
-		$shortmessage='#'.$vars['tid'].' - '.$vars['subject'] . ' ('.$companyname.')'; 
-		$card_desc = '[Ticket Link](' . $CONFIG['SystemURL'].'/'.$customadminpath.'/supporttickets.php?action=viewticket&id='.$vars['ticketid'] .')'. PHP_EOL 
-				. 'Company: ' . $companyname . PHP_EOL 
-				. 'Message: ' . PHP_EOL . $vars['message'] ; 
+		$ticket_number = $getticket['tid']; 
+		
+		// Get subject from template in WHMCS configuration. 
+		$subject_template=$trello['subject_template'];
+		eval ("\$card_subject = \"$subject_template\";");
 
-		sendtrello(  $trello['trello_key'],
+		$body_template=$trello['body_template'];
+		eval ("\$card_desc = \"$body_template\";");
+
+		send_to_trello(  $trello['trello_key'],
 					$trello['trello_token'],
 					$trello['trello_list_id'],
 					$trello['card_position'],
-					$shortmessage,
+					$card_subject,
 					$card_desc,
 					$trello['debug']
 				);
@@ -60,42 +72,57 @@ ticketid	Integer	The ID of the ticket the department is being changed for. tblti
 deptid		Integer	The new department ID.
 deptname	String	The new department name.
 */
-function trello_TicketDepartmentChange($vars) {
+function trello_TicketDepartmentChange($input_vars) {
 	global $customadminpath, $CONFIG;
 	$trello = whmcs2trello_module_settings();
-	if ( (int)$trello['support_department'] > 0 AND $vars['deptid'] == (int)$trello['support_department'] ){
-		
+	if ( (int)$trello['support_department'] > 0 AND $input_vars['deptid'] == (int)$trello['support_department'] ){
+
+
+		$ticket_URL = $CONFIG['SystemURL'].'/'.$customadminpath.'/supporttickets.php?action=viewticket&id='.$input_vars['ticketid'] ;
+		$ticket_id = $input_vars['ticketid'];
+		$ticket_deptid	  = $input_vars['deptid'];
+		$ticket_deptname = $input_vars['deptname'];
+	
 		$companyname=''; 
 		$adminuser = "apiapi"; // set your own admin user
 		$responsetype = "json";  // Probably unnecessary
 		 // Get ticket information 
 		$command = "getticket";
 		$api_input = array(); 
-		$api_input["ticketid"] = $vars['ticketid'];
+		$api_input["ticketid"] = $input_vars['ticketid'];
 		$getticket = localAPI($command,$api_input,$adminuser);
-		$vars=array_merge($vars, $getticket); 
-		 if (!empty($vars["userid"])) {
+
+		$ticket_number = $getticket['tid']; 
+		$ticket_userid	  = $getticket['userid'];
+		$ticket_subject  = $getticket['subject'];
+		// $ticket_message  = $getticket['message'];
+		// The getticket API returns an array of responses, first one is the first message. 
+		$ticket_message  = $getticket['replies']['reply'][0]['message'];
+		$ticket_priority = $getticket['priority'];
+		
+		 if (!empty($ticket_userid)) {
 			 // Get customer details
 			 $command = "getclientsdetails";
 			 $api_input = array();
-			 $api_input["clientid"] = $vars['userid'];
+			 $api_input["clientid"] = $ticket_userid;
 			 $api_input["stats"] = false;
 			 $api_input["responsetype"] = $responsetype ; 
 
 			 $getclientsdetails = localAPI($command,$api_input,$adminuser);
 			 $companyname=$getclientsdetails["companyname"];
 		 }
-//		$shortmessage=$vars['priority'] .' priority ticket: '. $vars['subject'] ; 
-		$shortmessage='#'.$vars['tid'].' - '.$vars['subject'] . ' ('.$companyname.')'; 
-		$card_desc = '[Ticket Link](' . $CONFIG['SystemURL'].'/'.$customadminpath.'/supporttickets.php?action=viewticket&id='.$vars['ticketid'] .')'. PHP_EOL 
-				. 'Company: ' . $companyname . PHP_EOL 
-				. 'Message: ' . PHP_EOL . $vars['message'] ; 
 
-		sendtrello(  $trello['trello_key'],
+		$subject_template=$trello['subject_template'];
+		eval ("\$card_subject = \"$subject_template\";");
+
+		$body_template=$trello['body_template'];
+		eval ("\$card_desc = \"$body_template\";");
+		
+		send_to_trello(  $trello['trello_key'],
 					$trello['trello_token'],
 					$trello['trello_list_id'],
 					$trello['card_position'],
-					$shortmessage,
+					$card_subject,
 					$card_desc,
 					$trello['debug']
 				);
@@ -104,7 +131,7 @@ function trello_TicketDepartmentChange($vars) {
 }
 
 
-function sendtrello( $trello_key, $trello_token, $trello_list_id, $card_position, $card_name, $card_desc = '', $debug='') 
+function send_to_trello( $trello_key, $trello_token, $trello_list_id, $card_position, $card_name, $card_desc = '', $debug='') 
 {
 	$url = "https://api.trello.com/1/cards?key=".$trello_key."&token=".$trello_token;
 
