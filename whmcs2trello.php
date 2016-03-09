@@ -7,7 +7,7 @@ function whmcs2trello_config() {
     $configarray = array(
     "name" => "WHMCS to Trello",
     "description" => "Get tickets from WHMCS into your Trello account",
-    "version" => "0.5",
+    "version" => "0.6",
     "author" => "Shalom Carmel",
     "language" => "english",
     "fields" => array(
@@ -17,7 +17,9 @@ function whmcs2trello_config() {
         "card_position" => array ("FriendlyName" => "Card Position in List", "Type" => "dropdown", "Options" => "top,bottom,2,3,4,5,6,7,8,9,10", "Description" => "Position on board", "Default" => "bottom", ),		
 		"support_department" => array ("FriendlyName" => "Support Department ID", "Type" => "text", "Size" => "5", "Description" => "Leave empty to include all", "Default" => "", ),		
 		"subject_template" => array ("FriendlyName" => "Card subject template", "Type" => "text",  "Size" => "60",  
-			"Description" => '<br>Use the following variables for both templates: <ul><li>{$ticket_URL}<li>{$ticket_id}<li>{$ticket_userid}<li>{$ticket_deptid}<li>{$ticket_deptname}<li>{$ticket_subject}<li>{$ticket_message}<li>{$ticket_priority}<li>{$companyname}<li>{$ticket_number}</ul><a href="http://help.trello.com/article/821-using-markdown-in-trello">Formatting help</a>', 
+			"Description" => '<br>Use the following variables for both templates: 
+			       <ul><li>{$ticket_URL}<li>{$ticket_id}<li>{$ticket_userid}<li>{$ticket_deptid}<li>{$ticket_deptname}<li>{$ticket_subject}<li>{$ticket_message}<li>{$ticket_priority}<li>{$companyname}<li>{$ticket_number}</ul>
+				   <a href="http://help.trello.com/article/821-using-markdown-in-trello" target="_new">Click here for Trello Formatting Help</a>', 
 			"Default" => '#{$ticket_number} - {$ticket_subject} ({$companyname})', ),		
 		"body_template" => array ("FriendlyName" => "Card body template", "Type" => "textarea",  "Rows" => "10", "Cols" => "60",  "Description" => '', 
 			"Default" => 
