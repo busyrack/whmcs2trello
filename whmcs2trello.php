@@ -7,7 +7,7 @@ function whmcs2trello_config() {
     $configarray = array(
     "name" => "WHMCS to Trello",
     "description" => "Get tickets from WHMCS into your Trello account",
-    "version" => "0.1",
+    "version" => "0.5",
     "author" => "Shalom Carmel",
     "language" => "english",
     "fields" => array(
