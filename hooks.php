@@ -26,7 +26,7 @@ function trello_TicketOpen($input_vars) {
 		$ticket_message  = $input_vars['message'];
 		$ticket_priority = $input_vars['priority'];
 		$companyname=''; 
-		$adminuser = "apiapi";
+		$adminuser = $trello['api_user'];
 		$responsetype = "json";  // Probably unnecessary
 
 		 if (!empty($ticket_userid)) {
@@ -53,14 +53,22 @@ function trello_TicketOpen($input_vars) {
 		$body_template=$trello['body_template'];
 		eval ("\$card_desc = \"$body_template\";");
 
-		send_to_trello(  $trello['trello_key'],
+		$trello_response = json_decode(
+				send_to_trello(  $trello['trello_key'],
 					$trello['trello_token'],
 					$trello['trello_list_id'],
 					$trello['card_position'],
 					$card_subject,
 					$card_desc,
-					$trello['debug']
-				);
+					$trello['debug'],
+					$adminuser
+				)
+			);
+		if ($trello['cc_card'] == 'on') {
+			$email = $trello_response->email;
+			$cc = ( empty($getticket["cc"]) ? $email : $getticket["cc"] . "," . $email ); 
+			update_ticket_cc($cc, $ticket_id, $adminuser);
+		}
 	
 	}
 }
@@ -84,7 +92,7 @@ function trello_TicketDepartmentChange($input_vars) {
 		$ticket_deptname = $input_vars['deptname'];
 	
 		$companyname=''; 
-		$adminuser = "apiapi"; // set your own admin user
+		$adminuser = $trello['api_user'];
 		$responsetype = "json";  // Probably unnecessary
 		 // Get ticket information 
 		$command = "getticket";
@@ -118,20 +126,40 @@ function trello_TicketDepartmentChange($input_vars) {
 		$body_template=$trello['body_template'];
 		eval ("\$card_desc = \"$body_template\";");
 		
-		send_to_trello(  $trello['trello_key'],
+		$trello_response = json_decode(
+				send_to_trello(  $trello['trello_key'],
 					$trello['trello_token'],
 					$trello['trello_list_id'],
 					$trello['card_position'],
 					$card_subject,
 					$card_desc,
-					$trello['debug']
-				);
+					$trello['debug'],
+					$adminuser
+				)
+			);
+		if ($trello['cc_card'] == 'on') {
+			$email = $trello_response->email;
+			$cc = ( empty($getticket["cc"]) ? $email : $getticket["cc"] . "," . $email ); 
+			update_ticket_cc($cc, $ticket_id, $adminuser);
+		}
 	}
 
 }
 
 
-function send_to_trello( $trello_key, $trello_token, $trello_list_id, $card_position, $card_name, $card_desc = '', $debug='') 
+		function update_ticket_cc($cc, $ticket_id, $adminuser) {
+			$responsetype = "json";  // Probably unnecessary
+			$command = "updateticket";		
+			// initialize API data structure
+			$apivalues = array (
+				"ticketid" => $ticket_id,
+				"responsetype" => "json",	// Probably unnecessary
+				"cc" => $cc
+				); 
+			$updateticket = localAPI($command,$apivalues,$adminuser);
+		}
+
+function send_to_trello( $trello_key, $trello_token, $trello_list_id, $card_position, $card_name, $card_desc = '', $debug='', $adminuser) 
 {
 	$url = "https://api.trello.com/1/cards?key=".$trello_key."&token=".$trello_token;
 
@@ -168,7 +196,6 @@ function send_to_trello( $trello_key, $trello_token, $trello_list_id, $card_posi
     curl_close($ch);
 	if ($debug == 'on' ){
 		$command = "logactivity";
-		$adminuser = "apiapi";
 		$responsetype = "json";  // Probably unnecessary
 		$api_input["description"] = "trello request: ".$trello_json;
 		$api_input["responsetype"] = $responsetype ; 

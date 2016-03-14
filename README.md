@@ -2,6 +2,8 @@
 
 Get Support tickets into a Trello list. If a WHMCS Support Department is set up, then only new tickets for this department as well as tickets re-assigned to this department will be sent to trello. Otherwise - all new tickets will be sent. 
 
+When the "cc_card" checkbox is set, WHMCS will add the new Trello card email address as cc to the ticket. 
+
 At Globaldots, we use this extension to send only 2nd tier support tickets to the 2nd tier Trello board. 
 
 ## Dependencies
@@ -21,7 +23,6 @@ Here you will see a list of modules that have been uploaded, within this list yo
 
 
 ## Configuration
-
 There is no configuration beyond the module configuration screen. 
 
 `Trello Key` This is available here https://trello.com/app-key
@@ -30,6 +31,12 @@ There is no configuration beyond the module configuration screen.
 
 `Trello List ID` Navigate to the board you want to use, add .json at end of URL. Use the "idList" attribute of the list you want to use. 
 Alternatively, get the group id from the "id" attribute and use the following URL: https://api.trello.com/1/boards/REPLACE-WITH-YOUR-GROUP-ID?lists=open&list_fields=name&fields=name,desc&key=REPLACE-WITH-YOUR-KEY&token=REPLACE-WITH-YOUR_TOKEN
+
+## Bugs
+* WHMCS hook `TicketDepartmentChange` does not allow modification of ticket cc. There is an open ticket with WHMCS support about it. 
+
+## To do
+* Reflect in Trello the entire ticket lifecycle including all comments, changes and closing. 
 
 ## More Data
 http://www.globaldots.com 
